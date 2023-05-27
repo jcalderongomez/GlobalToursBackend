@@ -6,12 +6,9 @@ using Core.Entidades;
 
 namespace Core.Interfaces
 {
-    public interface IPaisRepositorio
+    public interface IPaisRepositorio : IRepositorio<Pais>
     {
-        //firmas de nuestros méodos
+        Task<Pais> Actualizar(Pais entidad);
 
-        Task<Pais> GetPaisAsync(int id);
-        Task<IReadOnlyList<Pais>> GetPaisesAsync();
-        
     }
 }

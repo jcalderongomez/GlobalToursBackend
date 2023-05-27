@@ -1,29 +1,22 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using Core.Entidades;
 using Core.Interfaces;
-using Microsoft.EntityFrameworkCore;
 
 namespace Infraestructura.Datos
 {
-    public class PaisRepositorio : IPaisRepositorio
+    public class PaisRepositorio : Repositorio<Pais>, IPaisRepositorio
     {
         private readonly ApplicationDbContext _db;
 
-        public PaisRepositorio(ApplicationDbContext db)
+        public PaisRepositorio(ApplicationDbContext db) : base(db)
         {
             _db = db;
         }
-        public async Task<Pais> GetPaisAsync(int id)
-        {
-            return await _db.Pais.FindAsync(id);
-        }
 
-        public async Task<IReadOnlyList<Pais>> GetPaisesAsync()
+        public async Task<Pais> Actualizar(Pais entidad)
         {
-            return await _db.Pais.ToListAsync();
+            _db.Pais.Update(entidad);
+            await _db.SaveChangesAsync();
+            return entidad;
         }
     }
 }

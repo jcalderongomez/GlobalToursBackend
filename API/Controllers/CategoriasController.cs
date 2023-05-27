@@ -2,10 +2,7 @@
 using AutoMapper;
 using Core.Entidades;
 using Core.Interfaces;
-using Infraestructura.Datos;
-using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using System.Net;
 
 namespace API.Controllers

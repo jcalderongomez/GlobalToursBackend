@@ -8,11 +8,6 @@ namespace Core.Interfaces
 {
     public interface ICategoriaRepositorio : IRepositorio<Categoria>
     {
-        
-        Task<Categoria> Actualizar(Categoria entidad);
-        
-
- 
-        
+        Task<Categoria> Actualizar(Categoria entidad);           
     }
 }

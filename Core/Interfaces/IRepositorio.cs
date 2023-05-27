@@ -1,5 +1,3 @@
-
-using Core.Especificacion;
 using System.Linq.Expressions;
 
 namespace Core.Interfaces
