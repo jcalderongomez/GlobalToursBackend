@@ -16,6 +16,8 @@ namespace API
             CreateMap<Pais, PaisUpdateDto>().ReverseMap();
 
             CreateMap<Lugar, LugarDto>().ReverseMap();
+            CreateMap<Lugar, LugarCreateDto>().ReverseMap();
+            CreateMap<Lugar, LugarUpdateDto>().ReverseMap();
         }
     }
 }
