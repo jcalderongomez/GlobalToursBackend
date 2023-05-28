@@ -42,7 +42,16 @@ namespace Infraestructura.Datos
             return await query.FirstOrDefaultAsync();
         }
 
-        public async Task<List<T>> ObtenerTodos(Expression<Func<T, bool>> filtro = null)
+        public Task<List<T>> ObtenerEspec(IEspecificacion<T> espec)
+        {
+            throw new NotImplementedException();
+        }
+
+        public async Task<IEnumerable<T>> ObtenerTodos(
+                            Expression<Func<T, bool>> filtro = null, 
+                            Func<IQueryable<T>,
+                            IOrderedQueryable<T>> orderBy = null, 
+                            string incluirPropiedades = null)
         {
             IQueryable<T> query = dbSet;
             
@@ -51,7 +60,28 @@ namespace Infraestructura.Datos
                 query = query.Where(filtro);
             }
 
+            if (incluirPropiedades != null) {
+                foreach (var ip in incluirPropiedades.Split(
+                                   new char[] { ',' },
+                                   StringSplitOptions.RemoveEmptyEntries)) {
+                    query = query.Include(ip);
+                }
+            }
+
+            if (orderBy != null) {
+                return await orderBy(query).ToListAsync();
+            }
+
             return await query.ToListAsync();
+        }
+
+        public async Task<T> ObtenerTodosEspec(IEspecificacion<T> espec)
+        {
+            return await AplicarEspecificacion(espec).FirstOrDefaultAsync();
+        }
+
+        private IQueryable<T> AplicarEspecificacion(IEspecificacion<T> espec) {
+            return EvaluadorEspecificacion<T>.GetQuery(_db.Set<T>().AsQueryable(), espec);
         }
 
         public async Task Remover(T entidad)

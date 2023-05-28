@@ -63,9 +63,7 @@ namespace API.Controllers
                     _response.IsExitoso = false;
                     return BadRequest(_response);
                 }
-
                 var categoria = await _categoriaRepo.Obtener(c => c.Id == id);
-
                 if (categoria == null)
                 {
                     _response.statusCode = HttpStatusCode.NotFound;
@@ -89,40 +87,40 @@ namespace API.Controllers
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public async Task<ActionResult<APIResponse>> CrearCategoria([FromBody] CategoriaCreateDto createDto) 
-        {
-            try
-            {
-                if (!ModelState.IsValid)
-                {
-                    return BadRequest(ModelState);
-                }
+        //public async Task<ActionResult<APIResponse>> CrearCategoria([FromBody] CategoriaCreateDto createDto) 
+        //{
+        //    try
+        //    {
+        //        if (!ModelState.IsValid)
+        //        {
+        //            return BadRequest(ModelState);
+        //        }
 
-                if (await _categoriaRepo.Obtener(c => c.Nombre.ToLower() == createDto.Nombre.ToLower()) != null)
-                {
-                    ModelState.AddModelError("NombreExiste", "La categoria con ese nombre ya existe!");
-                }
+        //        if (await _categoriaRepo.Obtener(c => c.Nombre.ToLower() == createDto.Nombre.ToLower()) != null)
+        //        {
+        //            ModelState.AddModelError("NombreExiste", "La categoria con ese nombre ya existe!");
+        //        }
 
-                if (createDto == null)
-                {
-                    return BadRequest(createDto);
-                }
+        //        if (createDto == null)
+        //        {
+        //            return BadRequest(createDto);
+        //        }
 
-                Categoria modelo = _mapper.Map<Categoria>(createDto);
+        //        Categoria modelo = _mapper.Map<Categoria>(createDto);
 
-                await _categoriaRepo.Crear(modelo);
-                _response.Resultado = modelo;
-                _response.statusCode = HttpStatusCode.Created;
+        //        await _categoriaRepo.Crear(modelo);
+        //        _response.Resultado = modelo;
+        //        _response.statusCode = HttpStatusCode.Created;
 
-                return CreatedAtRoute("GetCategoria", new { id = modelo.Id }, _response);
-            }
-            catch (Exception ex)
-            {
-                _response.IsExitoso = false;
-                _response.ErrorMessages = new List<string>() { ex.ToString() };
-            }
-            return Ok(_response);
-        }
+        //        return CreatedAtRoute("GetCategoria", new { id = modelo.Id }, _response);
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        _response.IsExitoso = false;
+        //        _response.ErrorMessages = new List<string>() { ex.ToString() };
+        //    }
+        //    return Ok(_response);
+        //}
 
         [HttpDelete("{id:int}")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]

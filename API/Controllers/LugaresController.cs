@@ -1,11 +1,9 @@
 using API.Dtos;
 using AutoMapper;
 using Core.Entidades;
-using Core.Especificacion;
 using Core.Interfaces;
-using Infraestructura.Datos;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
+using System.Net;
 
 namespace API.Controllers
 {
@@ -13,62 +11,173 @@ namespace API.Controllers
     [Route("api/[controller]")]
     public class LugaresController : ControllerBase
     {
-        
-        private readonly IRepositorio<Lugar> _lugarRepo;
-        private readonly IRepositorio<Pais> _paisRepo;
-        private readonly IRepositorio<Categoria> _categoriaRepo;
+        private readonly ILogger<LugaresController> _logger;
+        private readonly ILugarRepositorio _lugarRepo;
         private readonly IMapper _mapper;
+        protected APIResponse _response;
 
-        public LugaresController(IRepositorio<Lugar> lugarRepo, IRepositorio<Pais> paisRepo, IRepositorio<Categoria> categoriaRepo, IMapper mapper)
+        //private readonly IRepositorio<Lugar> _lugarRepo;
+
+        public LugaresController(ILogger<LugaresController> logger, ILugarRepositorio lugarRepo, IMapper mapper)
         {
-            _lugarRepo = lugarRepo;
-            _paisRepo = paisRepo;
-            _categoriaRepo = categoriaRepo;
             _mapper = mapper;
+            _logger = logger;
+            _lugarRepo = lugarRepo;
+            _response = new();
         }
 
-        //[HttpGet]
-        //public async Task<ActionResult<IReadOnlyList<LugarDto>>> GetLugares()
-        //{
-        //    var espec = new LugaresConPaisCategoriaEspecificacion();
-        //    //var lugares = await _lugarRepo.ObtenerTodosEspec(espec);
+        [HttpGet]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        public async Task<ActionResult<APIResponse>> GetLugares()
+        {
+            try
+            {
+                _logger.LogInformation("Obtener Lugares");
+                IEnumerable<Lugar> lugarList = await _lugarRepo.ObtenerTodos(incluirPropiedades: "Categoria,Pais",
+                                                                            orderBy: l => l.OrderBy(l=>l.Nombre));
 
-        //    //return Ok(_mapper.Map<IReadOnlyList<Lugar>, IReadOnlyList<LugarDto>>(lugares));
+                _response.Resultado = _mapper.Map<IEnumerable<LugarDto>>(lugarList);
+                _response.statusCode = HttpStatusCode.OK;
 
-        //}
+                return Ok(_response);
+            }
+            catch (Exception ex)
+            {
+                _response.IsExitoso = false;
+                _response.ErrorMessages = new List<string>() { ex.ToString() };
+            }
+            return Ok(_response);
+        }
 
-        //[HttpGet("{id}")]
-        //public async Task<ActionResult<LugarDto>> GetLugar(int id)
-        //{
-        //    var espec = new LugaresConPaisCategoriaEspecificacion(id);
-        //    var lugar = await _lugarRepo.ObtenerEspec(espec);
-        //    return _mapper.Map<Lugar, LugarDto>(lugar);
-        //}
+        [HttpGet("{id}", Name = "GetLugar")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<ActionResult<LugarDto>> GetLugar(int id)
+        {
+            try
+            {
+                if (id == 0)
+                {
+                    _logger.LogError("Error al traer el Lugar con el ID " + id);
+                    _response.statusCode = HttpStatusCode.BadRequest;
+                    _response.IsExitoso = false;
+                    return BadRequest(_response);
+                }
 
+                var lugar = await _lugarRepo.Obtener(c => c.Id == id);
 
+                if (lugar == null)
+                {
+                    _response.statusCode = HttpStatusCode.NotFound;
+                    _response.IsExitoso = false;
+                    return NotFound(_response);
+                }
+                _response.Resultado = _mapper.Map<LugarDto>(lugar);
+                _response.statusCode = HttpStatusCode.OK;
+                return Ok(_response);
 
-        //[HttpDelete("{id}")]
-        //public async Task<bool> DeleteLugar(int id)
-        //{
-        //    try
-        //    {
-        //        Lugar lugar = await _lugarRepo.ObtenerAsync(id);
-        //        if (lugar == null)
-        //            return false;
+            }
+            catch (Exception ex)
+            {
+                _response.IsExitoso = false;
+                _response.ErrorMessages = new List<string>() { ex.ToString() };
+            }
+            return Ok(_response);
+        }
 
-        //        _lugarRepo.Remover(lugar);
+        [HttpPost]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<ActionResult<APIResponse>> CrearLugar([FromBody] LugarCreateDto createDto)
+        {
+            try
+            {
+                if (!ModelState.IsValid)
+                {
+                    return BadRequest(ModelState);
+                }
 
+                if (await _lugarRepo.Obtener(c => c.Nombre.ToLower() == createDto.Nombre.ToLower()) != null)
+                {
+                    ModelState.AddModelError("NombreExiste", "El lugar con ese nombre ya existe!");
+                }
 
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        Console.WriteLine($"Error al eliminar el objeto: {ex.Message}");
-        //        return false;
-        //    }
-        //    return true;
-        //}
+                if (createDto == null)
+                {
+                    return BadRequest(createDto);
+                }
 
+                Lugar modelo = _mapper.Map<Lugar>(createDto);
 
-        
+                await _lugarRepo.Crear(modelo);
+                _response.Resultado = modelo;
+                _response.statusCode = HttpStatusCode.Created;
+
+                return CreatedAtRoute("GetLugar", new { id = modelo.Id }, _response);
+            }
+            catch (Exception ex)
+            {
+                _response.IsExitoso = false;
+                _response.ErrorMessages = new List<string>() { ex.ToString() };
+            }
+            return Ok(_response);
+        }
+
+        [HttpDelete("{id:int}")]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> DeleteLugar(int id)
+        {
+            try
+            {
+                if (id == 0)
+                {
+                    _response.IsExitoso = false;
+                    _response.statusCode = HttpStatusCode.BadRequest;
+                    return BadRequest(_response);
+                }
+                var lugar = await _lugarRepo.Obtener(c => c.Id == id);
+
+                if (lugar == null)
+                {
+                    _response.IsExitoso = false;
+                    _response.statusCode = HttpStatusCode.NotFound;
+                    return NotFound(_response);
+                }
+
+                await _lugarRepo.Remover(lugar);
+
+                _response.statusCode = HttpStatusCode.NoContent;
+                return Ok(_response);
+            }
+            catch (Exception ex)
+            {
+                _response.IsExitoso = false;
+                _response.ErrorMessages = new List<string>() { ex.ToString() };
+            }
+            return BadRequest(_response);
+        }
+
+        [HttpPut("{id:int}")]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        public async Task<IActionResult> UpdateLugar(int id, [FromBody] LugarDto updateDto)
+        {
+            if (updateDto == null || id != updateDto.Id)
+            {
+                _response.IsExitoso = false;
+                _response.statusCode = HttpStatusCode.BadRequest;
+                return BadRequest(_response);
+            }
+            Lugar modelo = _mapper.Map<Lugar>(updateDto);
+
+            await _lugarRepo.Actualizar(modelo);
+            _response.statusCode = HttpStatusCode.NoContent;
+
+            return Ok(_response);
+        }
     }
 }
