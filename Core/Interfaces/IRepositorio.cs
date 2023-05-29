@@ -4,6 +4,7 @@ using System.Linq.Expressions;
 namespace Core.Interfaces
 {
     public interface IRepositorio<T> where T : class
+
     {
         Task Crear(T entidad);
 
@@ -17,8 +18,8 @@ namespace Core.Interfaces
 
         //Task<IReadOnlyList<T>> ObtenerTodosEspec(IEspecificacion<T> espec);
 
-        Task<T> Obtener(Expression<Func<T,bool>> filtro = null,bool tracked=true);
-
+        Task<T> ObtenerPrimero(Expression<Func<T,bool>> filtro = null,string incluirPropiedades = null);
+        Task<T> Obtener(Expression<Func<T, bool>> filtro = null, string incluirPropiedades = null);
         Task Remover(T entidad);
 
         Task Grabar();

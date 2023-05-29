@@ -29,15 +29,40 @@ namespace Infraestructura.Datos
             await _db.SaveChangesAsync();
         }
 
-        public async Task<T> Obtener(Expression<Func<T, bool>> filtro = null, bool tracked = true)
+        public async Task<T> Obtener(Expression<Func<T, bool>> filtro = null, string incluirPropiedades = null)
         {
             IQueryable<T> query = dbSet;
-            if (!tracked) {
-                query = query.AsNoTracking();
+            if (filtro != null)
+            {
+                query = query.Where(filtro);
             }
 
-            if (filtro != null) {
+            if (incluirPropiedades != null)
+            {
+                foreach (var ip in incluirPropiedades.Split(
+                                   new char[] { ',' },
+                                   StringSplitOptions.RemoveEmptyEntries))
+                {
+                    query = query.Include(ip);
+                }
+            }
+            return await query.FirstOrDefaultAsync();
+        }
+        public async Task<T> ObtenerPrimero(Expression<Func<T, bool>> filtro = null, string incluirPropiedades = null)
+        {
+            IQueryable<T> query = dbSet;
+            if (filtro!=null) {
                 query = query.Where(filtro);
+            }
+
+            if (incluirPropiedades != null)
+            {
+                foreach (var ip in incluirPropiedades.Split(
+                                   new char[] { ',' },
+                                   StringSplitOptions.RemoveEmptyEntries))
+                {
+                    query = query.Include(ip);
+                }
             }
             return await query.FirstOrDefaultAsync();
         }

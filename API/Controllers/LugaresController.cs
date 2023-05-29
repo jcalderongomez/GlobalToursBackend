@@ -3,6 +3,8 @@ using AutoMapper;
 using Core.Entidades;
 using Core.Interfaces;
 using Microsoft.AspNetCore.Mvc;
+using System.Collections.Generic;
+using System.Linq.Expressions;
 using System.Net;
 
 namespace API.Controllers
@@ -65,8 +67,9 @@ namespace API.Controllers
                     return BadRequest(_response);
                 }
 
-                var lugar = await _lugarRepo.Obtener(c => c.Id == id);
-
+                var lugar = await _lugarRepo.ObtenerPrimero(l => l.Id == id, incluirPropiedades:"Categoria,Pais");
+                _response.Resultado = _mapper.Map<LugarDto>(lugar);
+                
                 if (lugar == null)
                 {
                     _response.statusCode = HttpStatusCode.NotFound;
@@ -75,6 +78,7 @@ namespace API.Controllers
                 }
                 _response.Resultado = _mapper.Map<LugarDto>(lugar);
                 _response.statusCode = HttpStatusCode.OK;
+
                 return Ok(_response);
 
             }
